@@ -9,6 +9,12 @@ class PermissionSeeder extends Seeder
 {
     public function run()
     {
+        app()[\Spatie\Permission\Models\Role::class]->forgetCachedPermissions();
+        app()[\Spatie\Permission\Models\Permission::class]->forgetCachedPermissions();
+
+        // Clear out the old permissions and roles
+        \Spatie\Permission\Models\Permission::query()->delete();
+        \Spatie\Permission\Models\Role::query()->delete();
         // Product permissions
         Permission::create(['name' => 'products.view']);
         Permission::create(['name' => 'products.create']);

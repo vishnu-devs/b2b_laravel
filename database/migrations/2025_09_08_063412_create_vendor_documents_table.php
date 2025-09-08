@@ -11,15 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('products', function (Blueprint $table) {
+        Schema::create('vendor_documents', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->string('name');
-            $table->decimal('price', 10, 2);
-            // $table->foreignId('company_id')->constrained()->cascadeOnDelete(); // Removed to avoid dependency on companies table
+            $table->foreignId('vendor_request_id')->constrained('vendor_requests')->onDelete('cascade');
+            $table->string('document_type');
+            $table->string('path');
             $table->timestamps();
         });
-
     }
 
     /**
@@ -27,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('products');
+        Schema::dropIfExists('vendor_documents');
     }
 };

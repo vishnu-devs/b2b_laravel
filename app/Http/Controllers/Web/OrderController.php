@@ -133,7 +133,7 @@ class OrderController extends Controller
         $user = auth()->user();
         
         // Admin can view all orders
-        if ($user->hasRole(['admin', 'superadmin'])) {
+        if ($user->hasRole(['admin', 'super_admin'])) {
             return true;
         }
         
@@ -155,7 +155,7 @@ class OrderController extends Controller
         $user = auth()->user();
         
         // Admin can delete any order
-        if ($user->hasRole(['admin', 'superadmin'])) {
+        if ($user->hasRole(['admin', 'super_admin'])) {
             return true;
         }
         

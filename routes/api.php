@@ -39,9 +39,10 @@ Route::prefix('v1')->group(function () {
         Route::delete('/products/{product}', [ProductController::class, 'destroy']);
         
         // Vendor Details
-        Route::get('/vendor-details', [VendorController::class, 'getVendorDetails']);
+        
+        Route::post('/vendor-details', [VendorController::class, 'submitVendorRequest']);
+        Route::put('/vendor-requests/{vendorRequest}/status', [VendorController::class, 'updateVendorRequestStatus']);
     });
  
-    // Public route for vendor request submission
-    Route::post('/vendor-details', [VendorController::class, 'submitVendorRequest']);
+
  });

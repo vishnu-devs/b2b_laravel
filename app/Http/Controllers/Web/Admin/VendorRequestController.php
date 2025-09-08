@@ -23,17 +23,21 @@ class VendorRequestController extends Controller
 
     public function update(Request $request, VendorRequest $vendorRequest)
     {
-        $request->validate([
-            'status' => 'required|in:0,1,2' // 0: pending, 1: approved, 2: rejected
+        $validatedData = $request->validate([
+            'status' => 'required|in:approved,rejected',
+            'rejection_reason' => 'nullable|string',
         ]);
 
+        $status = $validatedData['status'] === 'approved' ? 1 : 2;
+
         $vendorRequest->update([
-            'status' => $request->status,
+            'status' => $status,
+            'rejection_reason' => $validatedData['rejection_reason'] ?? null,
             'processed_by' => auth()->id(),
             'processed_at' => now()
         ]);
 
-        if ((int)$request->status === 1) {
+        if ($status === 1) {
             $user = User::find($vendorRequest->user_id);
             $vendorRole = Role::where('name', 'vendor')->first();
             $user->assignRole($vendorRole);

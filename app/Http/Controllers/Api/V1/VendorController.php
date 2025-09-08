@@ -3,7 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\VendorDetail;
+use App\Models\VendorRequest;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -14,6 +15,7 @@ class VendorController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
+                'business_name' => 'required|string',
                 'business_type' => 'required|string',
                 'gst_number' => 'required|string',
                 'pan_number' => 'required|string',
@@ -28,10 +30,7 @@ class VendorController extends Controller
                 'account_number' => 'required|string',
                 'ifsc_code' => 'required|string',
                 'branch_name' => 'required|string',
-                'gst_certificate' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
-                'pan_card' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
-                'business_license' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
-                'bank_statement' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
+                'documents.*' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
             ]);
 
             if ($validator->fails()) {
@@ -42,19 +41,14 @@ class VendorController extends Controller
                 ], 422);
             }
 
-            // Upload documents
-            $gstPath = $request->file('gst_certificate')->store('vendor_documents/gst', 'public');
-            $panPath = $request->file('pan_card')->store('vendor_documents/pan', 'public');
-            $licensePath = $request->file('business_license')->store('vendor_documents/license', 'public');
-            $bankStatementPath = $request->file('bank_statement')->store('vendor_documents/bank', 'public');
-
-            // Create vendor details
-            $vendorDetail = VendorDetail::create([
-                'user_id' => mt_rand(10000, 99999), // Generate random user_id between 10000-99999
+            // Create vendor request
+            $vendorRequest = VendorRequest::create([
+                'user_id' => auth()->id(),
+                'business_name' => $request->business_name,
                 'business_type' => $request->business_type,
                 'gst_number' => $request->gst_number,
                 'pan_number' => $request->pan_number,
-                'business_address' => $request->business_address,
+                'address' => $request->business_address,
                 'city' => $request->city,
                 'state' => $request->state,
                 'pincode' => $request->pincode,
@@ -65,19 +59,26 @@ class VendorController extends Controller
                 'account_number' => $request->account_number,
                 'ifsc_code' => $request->ifsc_code,
                 'branch_name' => $request->branch_name,
-                'gst_certificate_path' => $gstPath,
-                'pan_card_path' => $panPath,
-                'business_license_path' => $licensePath,
-                'bank_statement_path' => $bankStatementPath,
                 'status' => 0
             ]);
+
+            // Upload documents and associate with vendor request
+            if ($request->hasFile('documents')) {
+                foreach ($request->file('documents') as $document) {
+                    $path = $document->store('vendor_documents', 'public');
+                    $vendorRequest->documents()->create([
+                        'document_type' => $document->getClientOriginalName(), // You might want a more specific type here
+                        'path' => $path,
+                    ]);
+                }
+            }
 
 
 
             return response()->json([
                 'status' => 'success',
                 'message' => 'Vendor request submitted successfully',
-                'data' => $vendorDetail
+                'data' => $vendorRequest
             ], 201);
 
         } catch (\Exception $e) {
@@ -89,29 +90,39 @@ class VendorController extends Controller
         }
     }
 
-    public function getVendorDetails()
+    public function updateVendorRequestStatus(Request $request, VendorRequest $vendorRequest)
     {
         try {
-            $vendorDetail = VendorDetail::where('user_id', auth()->id())->first();
-            
-            if (!$vendorDetail) {
+            $validator = Validator::make($request->all(), [
+                'status' => 'required|in:approved,rejected',
+                'rejection_reason' => 'nullable|string',
+            ]);
+
+            if ($validator->fails()) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Vendor details not found'
-                ], 404);
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
             }
+
+            $vendorRequest->status = $request->status === 'approved' ? 1 : 2; // 1 for approved, 2 for rejected
+            $vendorRequest->rejection_reason = $request->rejection_reason;
+            $vendorRequest->save();
 
             return response()->json([
                 'status' => 'success',
-                'data' => $vendorDetail
+                'message' => 'Vendor request status updated successfully',
+                'data' => $vendorRequest
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Failed to get vendor details: ' . $e->getMessage());
+            \Log::error('Vendor request status update failed: ' . $e->getMessage());
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to get vendor details'
+                'message' => 'Failed to update vendor request status'
             ], 500);
         }
     }
+
 }

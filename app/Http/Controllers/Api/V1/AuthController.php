@@ -54,7 +54,12 @@ class AuthController extends Controller
             'status' => 'success',
             'message' => 'User registered successfully',
             'data' => [
-                'user' => $user,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->roles->first()->name ?? null,
+                ],
                 'token' => $token
             ]
         ], 201);
@@ -122,7 +127,12 @@ class AuthController extends Controller
             'status' => 'success',
             'message' => 'User logged in successfully',
             'data' => [
-                'user' => $user,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->roles->first()->name ?? null,
+                ],
                 'token' => $token
             ]
         ])->withCookie($cookie);

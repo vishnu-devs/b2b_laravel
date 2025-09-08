@@ -6,10 +6,19 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up()
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            // Basic product information
+        Schema::create('products', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->string('name');
+            $table->decimal('price', 10, 2);
+
+
+ // Basic product information
             $table->text('description')->nullable()->after('name');
             $table->string('category')->after('description');
             $table->string('brand')->nullable()->after('category');
@@ -43,35 +52,17 @@ return new class extends Migration
             $table->decimal('width', 8, 2)->nullable()->after('length'); // in cm
             $table->decimal('height', 8, 2)->nullable()->after('width'); // in cm
             $table->boolean('free_shipping')->default(false)->after('height');
+
+            $table->timestamps();
         });
+
     }
 
-    public function down()
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->dropColumn([
-                'description',
-                'category',
-                'brand',
-                'model',
-                'stock_quantity',
-                'mrp',
-                'discount_percentage',
-                'specifications',
-                'highlights',
-                'main_image',
-                'additional_images',
-                'slug',
-                'is_featured',
-                'is_active',
-                'average_rating',
-                'review_count',
-                'weight',
-                'length',
-                'width',
-                'height',
-                'free_shipping'
-            ]);
-        });
+        Schema::dropIfExists('products');
     }
 };

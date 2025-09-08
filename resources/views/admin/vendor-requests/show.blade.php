@@ -13,6 +13,9 @@
                         <a href="{{ route('admin.vendor-requests.index') }}" class="text-indigo-600 hover:text-indigo-900">← Back to Vendor Requests</a>
                     </div>
 
+                    <p>Debug - Raw Status: {{ $vendorRequest->getAttributes()['status'] }}</p>
+                    <p>Debug - Accessed Status: {{ $vendorRequest->status }}</p>
+
                     @if(session('success'))
                         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
                             <span class="block sm:inline">{{ session('success') }}</span>
@@ -96,7 +99,7 @@
                         </div>
                     @endif
 
-                    @if($vendorRequest->status === 0)
+                    @if($vendorRequest->status === 'pending')
                         <div class="mt-8 flex space-x-4">
                             <form method="POST" action="{{ route('admin.vendor-requests.update', $vendorRequest) }}" class="inline">
                                 @csrf
@@ -107,16 +110,38 @@
                                 </button>
                             </form>
 
-                            <form method="POST" action="{{ route('admin.vendor-requests.update', $vendorRequest) }}" class="inline">
+                            <form method="POST" action="{{ route('admin.vendor-requests.update', $vendorRequest) }}" class="inline" onsubmit="return confirmReject(this);">
                                 @csrf
                                 @method('PUT')
                                 <input type="hidden" name="status" value="rejected">
+                                <input type="hidden" name="rejection_reason" id="rejection_reason_input">
                                 <button type="submit" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
                                     Reject Request
                                 </button>
                             </form>
                         </div>
                     @endif
+
+                    @if($vendorRequest->status === 'rejected' && $vendorRequest->rejection_reason)
+                        <div class="mt-8">
+                            <h3 class="text-lg font-semibold mb-4">Rejection Reason</h3>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p>{{ $vendorRequest->rejection_reason }}</p>
+                            </div>
+                        </div>
+                    @endif
+
+                    <script>
+                        function confirmReject(form) {
+                            const reason = prompt('Please provide a reason for rejection:');
+                            if (reason === null || reason.trim() === '') {
+                                alert('Rejection reason cannot be empty.');
+                                return false;
+                            }
+                            document.getElementById('rejection_reason_input').value = reason;
+                            return true;
+                        }
+                    </script>
                 </div>
             </div>
         </div>
